@@ -12,7 +12,9 @@
 
       .tooltip {
         font-weight: bold;
+        text-align: center;
       }
+
       .graph{
         fill: black;
         background-color: white;
@@ -107,30 +109,58 @@
 
         var yAxis = d3.axisLeft()
           .scale(y)
-          //.ticks(1);
+
+        var div = d3.select("body").append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0);
 
         var circle = graph.selectAll("g")
           .data(result)
-          .enter().append("g");
-          //.attr("transform", function(x) {
-          //  console.log(x);
-           // return "translate(" + (test[x-1] * 10) +"," + (test[x-1] * 10)+ ")";
-         // });
+          .enter().append("g")
+          .attr("transform", function() {
+             return "translate(" + margin.left +"," + margin.top + ")";
+          });
 
        circle.append("circle")
           .attr("cx", function(d,i) {return x(result[i].Seconds)})
           .attr("cy", function(d,i) {
             return y(result[i].Place);})
-          .attr("r", 4);
+          .attr("r", 4)
+          .on('mouseover', function(d,i) {
+             dynamicColor = this.style.fill;
+             d3.select(this)
+              .style('fill', 'gray');
+
+             div.transition()
+             .duration(200)
+             .style('opacity', .9);
+
+             div.html("<span class='tooltip'>" + result[i].Name + ": " + result[i].Nationality + "<br/> Year: " + result[i].Year + ", Time: " + result[i].Time + "</span>")
+             .style("left", (d3.event.pageX) + "px")
+             .style("top", (d3.event.pageY - 28) + "px")
+             .style("height", "45px")
+             .style("width", "150px")
+             .style("padding", "10px")
+             .style("padding-bottom", "0px");
+          })
+          .on('mouseout', function(d) {
+             d3.select(this)
+            .style('fill', dynamicColor)
+
+            div.transition()
+            .duration(500)
+            .style("opacity", 0);
+          });
+
 
         graph.append("g")
           .attr("class", "x axis")
-          .attr("transform", "translate(" + 0 + "," + (height + margin.top) + ")")
+          .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
           .call(xAxis);
 
         graph.append("g")
           .attr("class", "y axis")
-          .attr("transform", "translate(" + margin.left + "," + 0 + ")")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
           .call(yAxis);
       },
 
