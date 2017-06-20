@@ -7,7 +7,7 @@
     <style>
 
       body {
-        background-color: red;
+        background-color: white;
       }
 
       .tooltip {
@@ -16,17 +16,24 @@
       }
 
       .graph{
+        fill: red;
+        background-color: green;
+        margin:0 10%;
+      }
+      
+      .YAxisLabel {
         fill: black;
-        background-color: white;
-        margin:0 5%;
+        font: 15px sans-serif;
+        font-weight: bold;
       }
 
-      .graph text {
+      .tooltipText {
         fill: black;
         font: 10px sans-serif;
-        text-anchor: middle;
+        font-weight: bold;
       }
 
+      
       .axis text {
          font: 10px sans-serif;
       }
@@ -54,7 +61,8 @@
       h1,h2 {
         text-align: center;
         color:black;
-        font-size: 5em;
+        font-size: 3em;
+        font-family: sans-serif;
       }
 
       h2 {
@@ -67,7 +75,7 @@
 
   </head>
   <body>
-  <h1> Doping in Professional Bicycle Racing</h1>
+  <h1> Doping in Professional Bicycle Racing </h1>
   <h2> 35 Fastest Times Up The Alps</h2>
   <svg class="graph"></svg>
   <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -84,7 +92,7 @@
 
         // values for chart dimensions
         var margin = {top: 20, right: 30, bottom: 30, left: 40};
-        var width = 900- margin.left - margin.right;
+        var width = 700- margin.left - margin.right;
         var height = 500 - margin.top - margin.bottom;
 
         var y = d3.scaleLinear()
@@ -92,7 +100,7 @@
           .domain([35,1]);
 
         var x = d3.scaleLinear()
-          .range([0,width])
+          .range([0, width+ margin.left + (margin.right * 2)])
           .domain([2400,2210]);
 
         /*
@@ -102,10 +110,13 @@
         */
         var graph = d3.select("svg")
           .attr("width",width + margin.right + margin.left + margin.right + margin.left + 100)
-          .attr("height",height + margin.top + margin.bottom);
+          .attr("height",height + margin.top + (margin.bottom * 2));
 
         var xAxis = d3.axisBottom()
-          .scale(x);
+          .scale(x)
+          .tickFormat(function(x){
+            var timeDiff = x - result[0].Seconds;
+            return Math.floor(timeDiff/60) + ":" + timeDiff%60;});
 
         var yAxis = d3.axisLeft()
           .scale(y)
@@ -126,6 +137,8 @@
           .attr("cy", function(d,i) {
             return y(result[i].Place);})
           .attr("r", 4)
+          .attr("fill", function(d,i) { 
+            if(result[i].Doping === "") {return "black"}})
           .on('mouseover', function(d,i) {
              dynamicColor = this.style.fill;
              d3.select(this)
@@ -142,6 +155,7 @@
              .style("width", "150px")
              .style("padding", "10px")
              .style("padding-bottom", "0px");
+           
           })
           .on('mouseout', function(d) {
              d3.select(this)
@@ -151,17 +165,41 @@
             .duration(500)
             .style("opacity", 0);
           });
+        
+        circle.append("text")
+          .attr("x", function(d,i) {return x(result[i].Seconds) + 8})
+          .attr("y", function(d,i) {
+            return y(result[i].Place) + 4 ;})
+          .text(function(d,i) {return result[i].Name})
+          .attr("class", "tooltipText");
 
 
         graph.append("g")
           .attr("class", "x axis")
-          .attr("transform", "translate(" + margin.left + "," + (height + margin.top) + ")")
+          .attr("transform", "translate(" + margin.left + "," + (height + (margin.top) + 5) + ")")
           .call(xAxis);
 
         graph.append("g")
           .attr("class", "y axis")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
           .call(yAxis);
+        
+        //yAxis Label  
+        graph.append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", (margin.left/2) - 5)
+          .attr("x",-(height + margin.top)/2)
+          .style("text-anchor", "middle")
+          .text("Ranking")
+          .attr("class", "YAxisLabel");
+        
+        //xAxis  
+        graph.append("text")
+          .attr("y",height + margin.top + margin.bottom + 15)
+          .attr("x",(width + margin.left)/2)
+          .style("text-anchor", "start")
+          .text("Minutes Behind Fastest Time")
+          .attr("class", "YAxisLabel");
       },
 
     });
